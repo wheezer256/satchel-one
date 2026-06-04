@@ -212,6 +212,37 @@ async def test_login_raises_on_401():
 
 
 # ---------------------------------------------------------------------------
+# Versioned Accept header
+#
+# The live API requires a versioned `application/smhw.v{N}+json` Accept header.
+# Sending plain `application/json` makes the CDN return a 405 HTML/XML error
+# page (never reaching the API), whose body explodes on resp.json() and
+# surfaces as a generic "unknown" config-flow error. Regression guard.
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_login_sends_versioned_accept_header():
+    payload = load("auth_token.json")
+    session = _make_post_session(_make_response(payload))
+    client = SatchelOneClient(session=session, token="")
+    await client.login("parent@example.com", "password123")
+    headers = session.post.call_args[1].get("headers", {})
+    accept = headers.get("Accept", "")
+    assert accept.startswith("application/smhw.v") and accept.endswith("+json"), accept
+
+
+@pytest.mark.asyncio
+async def test_get_sends_versioned_accept_header():
+    payload = load("homework_upcoming.json")
+    session = _make_session(_make_response(payload))
+    client = SatchelOneClient(session=session, token="tok")
+    await client.get_homework(STUDENT_ID)
+    headers = session.get.call_args[1].get("headers", {})
+    accept = headers.get("Accept", "")
+    assert accept.startswith("application/smhw.v") and accept.endswith("+json"), accept
+
+
+# ---------------------------------------------------------------------------
 # get_children
 # ---------------------------------------------------------------------------
 

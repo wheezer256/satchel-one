@@ -10,6 +10,7 @@ Post-setup (options flow):
 
 from __future__ import annotations
 
+import logging
 from typing import Any
 
 import voluptuous as vol
@@ -28,6 +29,8 @@ from homeassistant.helpers.selector import (
 from .api.client import AuthError, ServerError, SatchelOneClient
 from .api.models import Child
 from .const import DOMAIN, MIN_UPDATE_INTERVAL
+
+_LOGGER = logging.getLogger(__name__)
 
 STEP_USER_SCHEMA = vol.Schema(
     {
@@ -83,6 +86,7 @@ class SatchelOneConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except ServerError:
                 errors["base"] = "cannot_connect"
             except Exception:
+                _LOGGER.exception("Unexpected error during Satchel One login")
                 errors["base"] = "unknown"
             else:
                 self._token = token
@@ -152,6 +156,7 @@ class SatchelOneConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except ServerError:
                 errors["base"] = "cannot_connect"
             except Exception:
+                _LOGGER.exception("Unexpected error during Satchel One reauth")
                 errors["base"] = "unknown"
             else:
                 return self.async_update_reload_and_abort(

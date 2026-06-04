@@ -8,9 +8,15 @@ All HTTP requests originate from api/client.py, which consumes these constants.
 
 API_HOST = "https://api.satchelone.com/api"
 
+# Satchel One uses a versioned vendor media type. Sending a plain
+# `application/json` Accept header makes the CDN return a 405 HTML/XML error
+# page that never reaches the API (verified live 2026-06-04); the versioned
+# type below routes to the real API. Bump if Satchel rolls the version.
+API_ACCEPT = "application/smhw.v3+json"
+
 # Default headers for all requests
 DEFAULT_HEADERS = {
-    "Accept": "application/json",
+    "Accept": API_ACCEPT,
     "X-Platform": "web",
 }
 

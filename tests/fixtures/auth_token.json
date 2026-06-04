@@ -1,0 +1,10 @@
+{
+  "access_token": "test-access-token-abc123",
+  "token_type": "Bearer",
+  "expires_in": 7776000,
+  "refresh_token": "test-refresh-token-xyz789",
+  "scope": "api",
+  "user_id": 99999999,
+  "school_id": 99001,
+  "user_type": "Parent"
+}

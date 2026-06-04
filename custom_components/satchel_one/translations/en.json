@@ -1,0 +1,40 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Satchel One — sign in",
+        "description": "Enter your Satchel One parent account credentials",
+        "data": {
+          "email": "Email address",
+          "password": "Password"
+        }
+      },
+      "link_children": {
+        "title": "Link children to Home Assistant people",
+        "description": "Found children: {child_names}. Optionally link each child to an existing person entity so automations can target them by person.",
+        "data_description": {
+          "child": "Link {child_name} to a person"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid email or password",
+      "cannot_connect": "Unable to reach Satchel One. Try again later.",
+      "unknown": "Unexpected error during login"
+    },
+    "abort": {
+      "reauth_successful": "Re-authentication was successful"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Satchel One options",
+        "data": {
+          "homework_interval_minutes": "Homework poll interval (minutes, min 5)",
+          "behaviour_interval_minutes": "Behaviour poll interval (minutes, min 5)"
+        }
+      }
+    }
+  }
+}

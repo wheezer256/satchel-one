@@ -1,0 +1,24 @@
+{
+  "url": "https://api.satchelone.com/api/detentions?student_id=99999999",
+  "data": {
+    "detentions": [
+      {
+        "id": 5001,
+        "description": "After-school detention",
+        "scheduled_at": "2026-06-10T15:30:00+00:00",
+        "location": "Room 12",
+        "duration": 30
+      },
+      {
+        "id": 5002,
+        "description": "Lunchtime detention",
+        "scheduled_at": "2026-06-12T12:00:00+00:00",
+        "location": "Library",
+        "duration": 20
+      }
+    ],
+    "meta": {
+      "selection_count": 2
+    }
+  }
+}

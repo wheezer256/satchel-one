@@ -1,0 +1,18 @@
+{
+  "student_praise_summary": {
+    "id": 99999999,
+    "student_id": 99999999,
+    "total_positive_count": 100,
+    "total_negative_count": 40,
+    "total_count": 60,
+    "month_positive_count": 0,
+    "month_negative_count": 1,
+    "month_count": -1,
+    "week_positive_count": 0,
+    "week_negative_count": 1,
+    "week_count": -1,
+    "day_count": 0,
+    "day_positive_count": 0,
+    "day_negative_count": 0
+  }
+}

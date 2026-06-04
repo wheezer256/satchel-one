@@ -1,0 +1,28 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+*.egg-info/
+dist/
+build/
+
+# Raw API captures (unsanitised — may contain real names/tokens)
+_API_reference.txt
+satchelone_*.json
+/children.json
+
+# Secrets
+.env
+*.env
+*_token
+*_password
+*.pem
+*.key
+
+# IDE
+.idea/
+.vscode/
+*.swp

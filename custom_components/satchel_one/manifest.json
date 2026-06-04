@@ -1,0 +1,11 @@
+{
+  "domain": "satchel_one",
+  "name": "Satchel One",
+  "codeowners": ["@wheezer256"],
+  "config_flow": true,
+  "documentation": "https://github.com/wheezer256/satchel-one",
+  "issue_tracker": "https://github.com/wheezer256/satchel-one/issues",
+  "iot_class": "cloud_polling",
+  "requirements": [],
+  "version": "0.1.0"
+}

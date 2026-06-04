@@ -1,0 +1,6 @@
+[allowlist]
+# _API_reference.txt is gitignored (never committed) and the token it contains
+# has been rotated. Exclude it so the pre-push hook doesn't block on it.
+paths = [
+    "_API_reference.txt",
+]

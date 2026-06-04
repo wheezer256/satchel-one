@@ -1,0 +1,40 @@
+{
+  "todos": [
+    {
+      "id": 701,
+      "user_id": 99999999,
+      "due_on": "2030-01-15T00:00:00+00:00",
+      "completed": false,
+      "class_task_id": 80001,
+      "class_task_type": "Homework",
+      "class_task_title": "Read chapter 3",
+      "class_task_description": "<p>Read chapter 3 and answer the review questions.</p>",
+      "class_group_name": "9X/Ma1",
+      "subject": "Mathematics",
+      "teacher_name": "Mr A. Example",
+      "issued_at": "2030-01-05T00:00:00+00:00",
+      "submission_status": null,
+      "submission_type": "OnlineQuiz",
+      "submission_grade": null,
+      "has_attachments": true
+    },
+    {
+      "id": 702,
+      "user_id": 99999999,
+      "due_on": "2030-01-15T00:00:00+00:00",
+      "completed": false,
+      "class_task_id": 80002,
+      "class_task_type": "Homework",
+      "class_task_title": "Essay draft",
+      "class_task_description": "<p>Write a first draft of your essay.</p>",
+      "class_group_name": "9X/En2",
+      "subject": "English",
+      "teacher_name": "Ms B. Example",
+      "issued_at": "2030-01-06T00:00:00+00:00",
+      "submission_status": null,
+      "submission_type": "OnlineQuiz",
+      "submission_grade": null,
+      "has_attachments": true
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "_fixture_notes": {
+    "description": "Sanitized fixture for the Satchel One parent child-list. All ids, names, codes, avatars and dates are fake. Structure mirrors the live API responses field-for-field.",
+    "child_list_endpoint": "GET https://api.satchelone.com/api/students",
+    "child_list_response_keys": ["students", "meta"],
+    "auth_headers": {
+      "Authorization": "Bearer <token from localStorage 'ember_simple_auth-session'.authenticated.access_token>",
+      "Accept": "application/json",
+      "X-Platform": "web"
+    },
+    "cdn_note": "Append a cache-buster (e.g. ?_cb=<timestamp>) - the CDN intermittently serves stale 400 errors on some collection endpoints.",
+    "school_name_lookup": {
+      "note": "The /api/students payload contains school_id only, NOT the school name. Resolve the name via the schools endpoint below.",
+      "endpoint": "GET https://api.satchelone.com/api/schools/{school_id}",
+      "response_keys": ["school"],
+      "name_field": "school.name",
+      "schools": { "900001": "Greenfield Academy" }
+    },
+    "alternate_child_list": {
+      "note": "GET /api/parents/{parent_id} also exposes the child list as parallel arrays.",
+      "endpoint": "GET https://api.satchelone.com/api/parents/{parent_id}",
+      "fields": {
+        "student_ids": [100001, 100002],
+        "student_names": ["Alex Jordan Doe", "Sam Taylor Doe"]
+      }
+    }
+  },
+
+  "students": [
+    {
+      "id": 100001,
+      "forename": "Alex Jordan",
+      "surname": "Doe",
+      "title": "Mx",
+      "year": "Year 10",
+      "school_id": 900001,
+      "registration_group_id": 700001,
+      "class_group_ids": [800011, 800012, 800013],
+      "parent_ids": [500001],
+      "gender": "unspecified",
+      "backend_type": "student",
+      "disabled": false,
+      "anonymous": false,
+      "is_guest": false,
+      "avatar": "https://example.invalid/avatars/student-default.png",
+      "title_changed": false,
+      "left_at": null,
+      "user_private_info_id": 600001,
+      "user_identity_id": 610001,
+      "student_praise_summary_id": 620001,
+      "student_badge_ids": [630001],
+      "student_category_ids": [],
+      "categories": [],
+      "invite_code": "FAKE-AAAA-1111",
+      "invite_code_expires_on": "2030-01-01",
+      "created_at": "2023-09-01T08:00:00.000Z",
+      "updated_at": "2026-06-01T08:00:00.000Z"
+    },
+    {
+      "id": 100002,
+      "forename": "Sam Taylor",
+      "surname": "Doe",
+      "title": "Mx",
+      "year": "Year 7",
+      "school_id": 900001,
+      "registration_group_id": 700002,
+      "class_group_ids": [800021, 800022],
+      "parent_ids": [500001],
+      "gender": "unspecified",
+      "backend_type": "student",
+      "disabled": false,
+      "anonymous": false,
+      "is_guest": false,
+      "avatar": "https://example.invalid/avatars/student-default.png",
+      "title_changed": false,
+      "left_at": null,
+      "user_private_info_id": 600002,
+      "user_identity_id": 610002,
+      "student_praise_summary_id": 620002,
+      "student_badge_ids": [],
+      "student_category_ids": [],
+      "categories": [],
+      "invite_code": "FAKE-BBBB-2222",
+      "invite_code_expires_on": "2030-01-01",
+      "created_at": "2024-09-01T08:00:00.000Z",
+      "updated_at": "2026-06-01T08:00:00.000Z"
+    }
+  ],
+
+  "meta": { "selection_count": 2 }
+}

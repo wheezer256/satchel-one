@@ -10,8 +10,10 @@ from custom_components.satchel_one.coordinator import BehaviourCoordinator, Home
 from custom_components.satchel_one.const import (
     EVENT_BEHAVIOUR_CREDIT,
     EVENT_BEHAVIOUR_DEMERIT,
+    EVENT_HOMEWORK_COMPLETED,
     EVENT_HOMEWORK_NEW,
 )
+import dataclasses
 
 FIXTURES = pathlib.Path(__file__).parent / "fixtures"
 STUDENT_ID = 99999999
@@ -105,6 +107,75 @@ async def test_already_seen_item_does_not_refire():
 
     events = [e for e in hass.bus.fired if e[0] == EVENT_HOMEWORK_NEW]
     assert events == []
+
+
+# ---------------------------------------------------------------------------
+# Homework completion delta: satchel_one_homework_completed
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_first_fetch_with_completed_fires_no_completed_events():
+    """On the first poll (and after restart) many todos are already complete —
+    must NOT fire a storm of completion events."""
+    hass = _make_hass()
+    homework = [dataclasses.replace(h, completed=True) for h in load_homework()]
+    client = _make_client(homework=homework)
+    coord = HomeworkCoordinator(hass=hass, client=client, student_id=STUDENT_ID)
+    await coord.async_refresh()
+    events = [e for e in hass.bus.fired if e[0] == EVENT_HOMEWORK_COMPLETED]
+    assert events == []
+
+
+@pytest.mark.asyncio
+async def test_homework_completed_on_second_fetch_fires_event():
+    hass = _make_hass()
+    task = load_homework()[0]
+    client = _make_client(homework=[dataclasses.replace(task, completed=False)])
+    coord = HomeworkCoordinator(hass=hass, client=client, student_id=STUDENT_ID)
+    await coord.async_refresh()  # first fetch — not complete, seeds
+
+    client.get_homework = AsyncMock(return_value=[dataclasses.replace(task, completed=True)])
+    await coord.async_refresh()  # flips to complete
+
+    events = [e for e in hass.bus.fired if e[0] == EVENT_HOMEWORK_COMPLETED]
+    assert len(events) == 1
+    assert events[0][1]["task_id"] == task.id
+    assert events[0][1]["title"] == task.title
+    assert events[0][1]["subject"] == task.subject
+
+
+@pytest.mark.asyncio
+async def test_homework_completed_not_refired_when_stays_completed():
+    hass = _make_hass()
+    task = load_homework()[0]
+    client = _make_client(homework=[dataclasses.replace(task, completed=False)])
+    coord = HomeworkCoordinator(hass=hass, client=client, student_id=STUDENT_ID)
+    await coord.async_refresh()
+
+    completed = [dataclasses.replace(task, completed=True)]
+    client.get_homework = AsyncMock(return_value=completed)
+    await coord.async_refresh()  # fires once
+    await coord.async_refresh()  # still complete — must not refire
+
+    events = [e for e in hass.bus.fired if e[0] == EVENT_HOMEWORK_COMPLETED]
+    assert len(events) == 1
+
+
+@pytest.mark.asyncio
+async def test_homework_completed_event_includes_person():
+    hass = _make_hass()
+    task = load_homework()[0]
+    client = _make_client(homework=[dataclasses.replace(task, completed=False)])
+    coord = HomeworkCoordinator(
+        hass=hass, client=client, student_id=STUDENT_ID, linked_person="person.alex"
+    )
+    await coord.async_refresh()
+
+    client.get_homework = AsyncMock(return_value=[dataclasses.replace(task, completed=True)])
+    await coord.async_refresh()
+
+    events = [e for e in hass.bus.fired if e[0] == EVENT_HOMEWORK_COMPLETED]
+    assert events[0][1]["person"] == "person.alex"
 
 
 # ---------------------------------------------------------------------------

@@ -9,6 +9,7 @@ MIN_UPDATE_INTERVAL = 5 * 60  # 5 minutes (hard floor)
 
 # Event names
 EVENT_HOMEWORK_NEW = "satchel_one_new_homework"
+EVENT_HOMEWORK_COMPLETED = "satchel_one_homework_completed"
 EVENT_HOMEWORK_OVERDUE = "satchel_one_homework_overdue"
 EVENT_BEHAVIOUR_CREDIT = "satchel_one_credit"
 EVENT_BEHAVIOUR_DEMERIT = "satchel_one_demerit"

@@ -3,6 +3,14 @@
 All notable changes to this project are documented here. This project adheres to
 [Semantic Versioning](https://semver.org/).
 
+## [1.1.0] — 2026-06-05
+
+### Added
+- **`satchel_one_homework_completed` event** — fires per task when a child marks
+  homework complete in Satchel (payload: `task_id`, `title`, `subject`, `person`).
+  Uses the same first-fetch guard as new-homework so a restart doesn't replay
+  every already-completed task.
+
 ## [1.0.0] — 2026-06-05
 
 First public release. Verified end-to-end against the live Satchel One API with a
@@ -36,4 +44,5 @@ real parent account.
 - **Attendance** — endpoint not yet captured from live traffic.
 - **Silent token refresh** — reauth currently re-prompts for the password.
 
+[1.1.0]: https://github.com/wheezer256/satchel-one/releases/tag/v1.1.0
 [1.0.0]: https://github.com/wheezer256/satchel-one/releases/tag/v1.0.0

@@ -36,6 +36,7 @@ All entities carry a `linked_person` attribute (the mapped `person.*` entity_id)
 | Event | Fired when | Key payload fields |
 |---|---|---|
 | `satchel_one_new_homework` | New task assigned | `task_id`, `title`, `subject`, `teacher`, `due_date`, `person` |
+| `satchel_one_homework_completed` | A task is marked complete in Satchel | `task_id`, `title`, `subject`, `person` |
 | `satchel_one_credit` | Positive behaviour event | `points`, `severity`, `reason`, `teacher`, `happened_on`, `person` |
 | `satchel_one_demerit` | Negative behaviour event | `points`, `severity`, `reason`, `teacher`, `happened_on`, `person` |
 

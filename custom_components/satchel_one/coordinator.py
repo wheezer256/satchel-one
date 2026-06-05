@@ -15,6 +15,7 @@ from .const import (
     DOMAIN,
     EVENT_BEHAVIOUR_CREDIT,
     EVENT_BEHAVIOUR_DEMERIT,
+    EVENT_HOMEWORK_COMPLETED,
     EVENT_HOMEWORK_NEW,
 )
 
@@ -48,6 +49,7 @@ class HomeworkCoordinator(DataUpdateCoordinator):
         self._child_name = child_name
         self._linked_person = linked_person
         self._seen_ids: set[int] = set()
+        self._completed_ids: set[int] = set()
         self._first_fetch = True
 
     async def _async_update_data(self) -> dict:
@@ -57,6 +59,10 @@ class HomeworkCoordinator(DataUpdateCoordinator):
             raise UpdateFailed(str(err)) from err
 
         new_items = [h for h in homework if h.id not in self._seen_ids]
+        completed_now = {h.id for h in homework if h.completed}
+        newly_completed = [
+            h for h in homework if h.completed and h.id not in self._completed_ids
+        ]
 
         if not self._first_fetch:
             for hw in new_items:
@@ -71,8 +77,19 @@ class HomeworkCoordinator(DataUpdateCoordinator):
                         "person": self._linked_person,
                     },
                 )
+            for hw in newly_completed:
+                self.hass.bus.async_fire(
+                    EVENT_HOMEWORK_COMPLETED,
+                    {
+                        "task_id": hw.id,
+                        "title": hw.title,
+                        "subject": hw.subject,
+                        "person": self._linked_person,
+                    },
+                )
 
         self._seen_ids.update(h.id for h in homework)
+        self._completed_ids = completed_now
         self._first_fetch = False
 
         return {"homework": homework}

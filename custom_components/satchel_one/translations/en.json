@@ -25,10 +25,7 @@
       },
       "link_children": {
         "title": "Link children to Home Assistant people",
-        "description": "Found children: {child_names}. Optionally link each child to an existing person entity so automations can target them by person.",
-        "data_description": {
-          "child": "Link {child_name} to a person"
-        }
+        "description": "Found children: {child_names}. Optionally link each child to an existing person entity so automations can target them by person."
       }
     },
     "error": {

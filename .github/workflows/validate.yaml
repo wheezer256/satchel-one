@@ -15,3 +15,5 @@ jobs:
         uses: hacs/action@main
         with:
           category: integration
+          # No brand assets in the HA brands repo yet (custom integration).
+          ignore: brands

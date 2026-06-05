@@ -1,0 +1,28 @@
+{
+  "_fixture_notes": {
+    "description": "Sanitized fixture for GET /api/public/school_search?filter=<name>&limit=20 (unauthenticated). All ids and names are fake. Structure mirrors the live smhw-api PublicSchool shape.",
+    "endpoint": "GET https://api.satchelone.com/api/public/school_search"
+  },
+  "schools": [
+    {
+      "id": 900001,
+      "name": "Greenfield Academy",
+      "address": "1 Greenfield Road",
+      "town": "Greenfield",
+      "post_code": "GF1 1AA",
+      "subdomain": "greenfield",
+      "is_active": true,
+      "brand_color": "#003366"
+    },
+    {
+      "id": 900002,
+      "name": "Greenfield High School",
+      "address": "2 High Street",
+      "town": "Greenfield",
+      "post_code": "GF2 2BB",
+      "subdomain": "greenfield-high",
+      "is_active": true,
+      "brand_color": null
+    }
+  ]
+}

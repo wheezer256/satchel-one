@@ -177,7 +177,7 @@ async def test_login_returns_token():
     payload = load("auth_token.json")
     session = _make_post_session(_make_response(payload))
     client = SatchelOneClient(session=session, token="")
-    token = await client.login("parent@example.com", "password123")
+    token = await client.login("parent@example.com", "password123", 900001)
     assert token == "test-access-token-abc123"
 
 
@@ -186,7 +186,7 @@ async def test_login_updates_internal_token():
     payload = load("auth_token.json")
     session = _make_post_session(_make_response(payload))
     client = SatchelOneClient(session=session, token="old")
-    await client.login("parent@example.com", "password123")
+    await client.login("parent@example.com", "password123", 900001)
     assert client._token == "test-access-token-abc123"
 
 
@@ -195,7 +195,7 @@ async def test_login_sends_credentials_in_post_body():
     payload = load("auth_token.json")
     session = _make_post_session(_make_response(payload))
     client = SatchelOneClient(session=session, token="")
-    await client.login("parent@example.com", "s3cr3t")
+    await client.login("parent@example.com", "s3cr3t", 900001)
     call_kwargs = session.post.call_args[1]
     data = call_kwargs.get("data", {})
     assert data["username"] == "parent@example.com"
@@ -208,38 +208,116 @@ async def test_login_raises_on_401():
     resp = _make_response({}, status=401)
     client = SatchelOneClient(session=_make_post_session(resp), token="")
     with pytest.raises(AuthError):
-        await client.login("bad@example.com", "wrong")
+        await client.login("bad@example.com", "wrong", 900001)
 
 
 # ---------------------------------------------------------------------------
-# Versioned Accept header
+# Login request shape (replicates the maintained smhw-api flow)
 #
-# The live API requires a versioned `application/smhw.v{N}+json` Accept header.
-# Sending plain `application/json` makes the CDN return a 405 HTML/XML error
-# page (never reaching the API), whose body explodes on resp.json() and
-# surfaces as a generic "unknown" config-flow error. Regression guard.
+# Login MUST POST to the root /oauth/token (not /api/oauth/token), with the
+# web client_id/client_secret as query params and a body carrying school_id
+# (Satchel scopes the credential check by school). Regression guards for the
+# first-deploy login failure.
 # ---------------------------------------------------------------------------
 
 @pytest.mark.asyncio
-async def test_login_sends_versioned_accept_header():
+async def test_login_posts_to_root_oauth_endpoint():
+    from custom_components.satchel_one.api.const_api import OAUTH_TOKEN_URL
     payload = load("auth_token.json")
     session = _make_post_session(_make_response(payload))
     client = SatchelOneClient(session=session, token="")
-    await client.login("parent@example.com", "password123")
-    headers = session.post.call_args[1].get("headers", {})
-    accept = headers.get("Accept", "")
-    assert accept.startswith("application/smhw.v") and accept.endswith("+json"), accept
+    await client.login("parent@example.com", "password123", 900001)
+    url = session.post.call_args[0][0]
+    assert url == OAUTH_TOKEN_URL
+    assert "/api/oauth/token" not in url  # the wrong, CDN-fronted route
+
+
+@pytest.mark.asyncio
+async def test_login_sends_client_credentials_as_query_params():
+    from custom_components.satchel_one.api.const_api import CLIENT_ID, CLIENT_SECRET
+    payload = load("auth_token.json")
+    session = _make_post_session(_make_response(payload))
+    client = SatchelOneClient(session=session, token="")
+    await client.login("parent@example.com", "password123", 900001)
+    params = session.post.call_args[1].get("params", {})
+    assert params.get("client_id") == CLIENT_ID
+    assert params.get("client_secret") == CLIENT_SECRET
+
+
+@pytest.mark.asyncio
+async def test_login_body_carries_school_id_and_verification_token():
+    payload = load("auth_token.json")
+    session = _make_post_session(_make_response(payload))
+    client = SatchelOneClient(session=session, token="")
+    await client.login("parent@example.com", "password123", 900001)
+    data = session.post.call_args[1].get("data", {})
+    assert data["school_id"] == 900001
+    assert data["verification_token"] == ""
 
 
 @pytest.mark.asyncio
 async def test_get_sends_versioned_accept_header():
+    from custom_components.satchel_one.api.const_api import API_ACCEPT
     payload = load("homework_upcoming.json")
     session = _make_session(_make_response(payload))
     client = SatchelOneClient(session=session, token="tok")
     await client.get_homework(STUDENT_ID)
     headers = session.get.call_args[1].get("headers", {})
-    accept = headers.get("Accept", "")
-    assert accept.startswith("application/smhw.v") and accept.endswith("+json"), accept
+    assert headers.get("Accept") == API_ACCEPT
+    assert headers.get("Accept").startswith("application/smhw.v")
+
+
+@pytest.mark.asyncio
+async def test_get_raises_clean_error_on_4xx_html_body():
+    """A 400 with an HTML body must raise ServerError (not a ContentTypeError
+    from blindly calling .json())."""
+    from custom_components.satchel_one.api.client import ServerError
+    resp = _make_response({}, status=400)
+    resp.text = AsyncMock(return_value="<html>Bad Request</html>")
+    resp.json = AsyncMock(side_effect=AssertionError(".json() must not be called on a 4xx"))
+    client = SatchelOneClient(session=_make_session(resp), token="tok")
+    with pytest.raises(ServerError) as exc:
+        await client.get_homework(STUDENT_ID)
+    assert "400" in str(exc.value)
+
+
+@pytest.mark.asyncio
+async def test_get_raises_auth_error_on_403():
+    resp = _make_response({}, status=403)
+    resp.text = AsyncMock(return_value="forbidden")
+    client = SatchelOneClient(session=_make_session(resp), token="tok")
+    with pytest.raises(AuthError):
+        await client.get_homework(STUDENT_ID)
+
+
+# ---------------------------------------------------------------------------
+# search_schools
+# ---------------------------------------------------------------------------
+
+@pytest.mark.asyncio
+async def test_search_schools_returns_school_list():
+    from custom_components.satchel_one.api.models import School
+    payload = load("school_search.json")
+    session = _make_session(_make_response(payload))
+    client = SatchelOneClient(session=session, token="")
+    result = await client.search_schools("Greenfield")
+    assert len(result) == 2
+    assert all(isinstance(s, School) for s in result)
+    assert result[0].id == 900001
+    assert result[0].name == "Greenfield Academy"
+    assert result[0].town == "Greenfield"
+
+
+@pytest.mark.asyncio
+async def test_search_schools_sends_no_auth_header():
+    payload = load("school_search.json")
+    session = _make_session(_make_response(payload))
+    client = SatchelOneClient(session=session, token="")
+    await client.search_schools("Greenfield")
+    headers = session.get.call_args[1].get("headers", {})
+    assert "Authorization" not in headers
+    params = session.get.call_args[1].get("params", {})
+    assert params.get("filter") == "Greenfield"
 
 
 # ---------------------------------------------------------------------------

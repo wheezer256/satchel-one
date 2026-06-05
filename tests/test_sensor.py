@@ -178,7 +178,7 @@ def test_next_homework_unique_id():
 
 def load_praises():
     data = json.loads((FIXTURES / "behaviour_praises.json").read_text())
-    return [BehaviourEvent.from_dict(p) for p in data["data"]["student_praises"]]
+    return [BehaviourEvent.from_dict(p) for p in data["student_praises"]]
 
 
 def load_summary():

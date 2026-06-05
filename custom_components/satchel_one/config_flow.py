@@ -27,12 +27,18 @@ from homeassistant.helpers.selector import (
 )
 
 from .api.client import AuthError, ServerError, SatchelOneClient
-from .api.models import Child
+from .api.models import Child, School
 from .const import DOMAIN, MIN_UPDATE_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 
-STEP_USER_SCHEMA = vol.Schema(
+STEP_SCHOOL_SCHEMA = vol.Schema(
+    {
+        vol.Required("school"): str,
+    }
+)
+
+STEP_CREDENTIALS_SCHEMA = vol.Schema(
     {
         vol.Required("email"): str,
         vol.Required("password"): str,
@@ -70,16 +76,68 @@ class SatchelOneConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         self._token: str = ""
         self._email: str = ""
+        self._school_id: int = 0
+        self._schools: list[School] = []
         self._children: list[Child] = []
 
     async def async_step_user(self, user_input: dict[str, Any] | None = None):
+        """Step 1: search for the school by name."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
             session = aiohttp_client.async_get_clientsession(self.hass)
             client = SatchelOneClient(session=session, token="")
             try:
-                token = await client.login(user_input["email"], user_input["password"])
+                schools = await client.search_schools(user_input["school"])
+            except ServerError:
+                errors["base"] = "cannot_connect"
+            except Exception:
+                _LOGGER.exception("Unexpected error during Satchel One school search")
+                errors["base"] = "unknown"
+            else:
+                if not schools:
+                    errors["base"] = "no_schools_found"
+                else:
+                    self._schools = schools
+                    return await self.async_step_pick_school()
+
+        return self.async_show_form(
+            step_id="user",
+            data_schema=STEP_SCHOOL_SCHEMA,
+            errors=errors,
+        )
+
+    async def async_step_pick_school(self, user_input: dict[str, Any] | None = None):
+        """Step 2: choose which matched school to authenticate against."""
+        if user_input is not None:
+            self._school_id = int(user_input["school_id"])
+            return await self.async_step_credentials()
+
+        options = [
+            {
+                "value": str(school.id),
+                "label": f"{school.name} — {school.town}" if school.town else school.name,
+            }
+            for school in self._schools
+        ]
+        return self.async_show_form(
+            step_id="pick_school",
+            data_schema=vol.Schema(
+                {vol.Required("school_id"): SelectSelector(SelectSelectorConfig(options=options))}
+            ),
+        )
+
+    async def async_step_credentials(self, user_input: dict[str, Any] | None = None):
+        """Step 3: parent email + password, scoped to the chosen school."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            session = aiohttp_client.async_get_clientsession(self.hass)
+            client = SatchelOneClient(session=session, token="")
+            try:
+                token = await client.login(
+                    user_input["email"], user_input["password"], self._school_id
+                )
                 children = await client.get_children()
             except AuthError:
                 errors["base"] = "invalid_auth"
@@ -95,15 +153,17 @@ class SatchelOneConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return await self.async_step_link_children()
 
         return self.async_show_form(
-            step_id="user",
-            data_schema=STEP_USER_SCHEMA,
+            step_id="credentials",
+            data_schema=STEP_CREDENTIALS_SCHEMA,
             errors=errors,
         )
 
     async def async_step_link_children(self, user_input: dict[str, Any] | None = None):
         if user_input is not None:
+            # Form fields are keyed by child name (so HA shows the name as the
+            # label); the stored map stays keyed by str(child.id).
             child_person_map = {
-                str(child.id): user_input.get(f"child_{child.id}", _NONE_OPTION)
+                str(child.id): user_input.get(child.name, _NONE_OPTION)
                 for child in self._children
             }
             # Replace "none" sentinel with None
@@ -116,6 +176,7 @@ class SatchelOneConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 data={
                     "email": self._email,
                     "token": self._token,
+                    "school_id": self._school_id,
                     "children": [
                         {"id": c.id, "name": c.name} for c in self._children
                     ],
@@ -126,7 +187,7 @@ class SatchelOneConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         person_options = _person_options(self.hass)
         schema_fields: dict = {}
         for child in self._children:
-            schema_fields[vol.Optional(f"child_{child.id}")] = SelectSelector(
+            schema_fields[vol.Optional(child.name)] = SelectSelector(
                 SelectSelectorConfig(options=person_options)
             )
 
@@ -150,7 +211,11 @@ class SatchelOneConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             session = aiohttp_client.async_get_clientsession(self.hass)
             client = SatchelOneClient(session=session, token="")
             try:
-                token = await client.login(reauth_entry.data["email"], user_input["password"])
+                token = await client.login(
+                    reauth_entry.data["email"],
+                    user_input["password"],
+                    reauth_entry.data["school_id"],
+                )
             except AuthError:
                 errors["base"] = "invalid_auth"
             except ServerError:
@@ -187,18 +252,19 @@ class SatchelOneOptionsFlow(config_entries.OptionsFlow):
             user_input["behaviour_interval_minutes"] = max(
                 int(user_input["behaviour_interval_minutes"]), _MIN_INTERVAL_MINUTES
             )
-            # Normalise person map: replace "none" sentinel with None
+            # Form fields are keyed by child name; the stored map stays keyed by
+            # str(child.id). Replace the "none" sentinel with None.
             child_person_map = {
                 str(child["id"]): (
                     None
-                    if user_input.get(f"child_{child['id']}", "none") == "none"
-                    else user_input.pop(f"child_{child['id']}", None)
+                    if user_input.get(child["name"], _NONE_OPTION) == _NONE_OPTION
+                    else user_input.get(child["name"])
                 )
                 for child in self._entry.data.get("children", [])
             }
-            # Remove per-child keys from top-level options dict
+            # Remove per-child name keys from the top-level options dict
             for child in self._entry.data.get("children", []):
-                user_input.pop(f"child_{child['id']}", None)
+                user_input.pop(child["name"], None)
             user_input["child_person_map"] = child_person_map
             return self.async_create_entry(title="", data=user_input)
 
@@ -218,9 +284,12 @@ class SatchelOneOptionsFlow(config_entries.OptionsFlow):
 
         existing_map = current.get("child_person_map", {})
         for child in self._entry.data.get("children", []):
-            schema_fields[vol.Optional(f"child_{child['id']}")] = SelectSelector(
-                SelectSelectorConfig(options=person_opts)
-            )
+            schema_fields[
+                vol.Optional(
+                    child["name"],
+                    default=existing_map.get(str(child["id"])) or _NONE_OPTION,
+                )
+            ] = SelectSelector(SelectSelectorConfig(options=person_opts))
 
         return self.async_show_form(
             step_id="init",

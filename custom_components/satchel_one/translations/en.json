@@ -2,6 +2,20 @@
   "config": {
     "step": {
       "user": {
+        "title": "Satchel One — find your school",
+        "description": "Enter your school's name to look it up",
+        "data": {
+          "school": "School name"
+        }
+      },
+      "pick_school": {
+        "title": "Satchel One — select your school",
+        "description": "Choose your school from the matches",
+        "data": {
+          "school_id": "School"
+        }
+      },
+      "credentials": {
         "title": "Satchel One — sign in",
         "description": "Enter your Satchel One parent account credentials",
         "data": {
@@ -20,6 +34,7 @@
     "error": {
       "invalid_auth": "Invalid email or password",
       "cannot_connect": "Unable to reach Satchel One. Try again later.",
+      "no_schools_found": "No schools matched that name. Try a different spelling.",
       "unknown": "Unexpected error during login"
     },
     "abort": {

@@ -6,23 +6,30 @@ typed models from models.py.
 
 from __future__ import annotations
 
+import logging
 import time
 from typing import TYPE_CHECKING, List
 
 from .const_api import (
     API_HOST,
+    BASE_HEADERS,
+    CLIENT_ID,
+    CLIENT_SECRET,
     DEFAULT_HEADERS,
-    ENDPOINT_AUTH,
     ENDPOINT_DETENTIONS,
+    ENDPOINT_SCHOOL_SEARCH,
     ENDPOINT_STUDENT_PRAISES,
     ENDPOINT_STUDENT_PRAISE_SUMMARY,
     ENDPOINT_STUDENTS,
     ENDPOINT_TODOS,
+    OAUTH_TOKEN_URL,
 )
-from .models import BehaviourEvent, BehaviourSummary, Child, Detention, Homework
+from .models import BehaviourEvent, BehaviourSummary, Child, Detention, Homework, School
 
 if TYPE_CHECKING:
     import aiohttp
+
+_LOGGER = logging.getLogger(__name__)
 
 
 class RateLimitError(Exception):
@@ -54,8 +61,15 @@ class SatchelOneClient:
         async with self._session.get(url, headers=self._headers(), params=params) as resp:
             if resp.status == 429:
                 raise RateLimitError("Rate limited by Satchel One API")
-            if resp.status >= 500:
-                raise ServerError(f"Satchel One API returned {resp.status}")
+            if resp.status in (401, 403):
+                raise AuthError(f"Satchel One API returned {resp.status} for {path}")
+            if resp.status >= 400:
+                # Read the body as text — error responses are often HTML/XML
+                # (a CDN/error page), so calling .json() blindly would raise an
+                # opaque ContentTypeError instead of a useful message.
+                body = (await resp.text())[:300]
+                _LOGGER.warning("Satchel One GET %s -> %s: %s", path, resp.status, body)
+                raise ServerError(f"Satchel One API returned {resp.status} for {path}: {body}")
             return await resp.json()
 
     async def get_children(self) -> List[Child]:
@@ -68,7 +82,7 @@ class SatchelOneClient:
 
     async def get_behaviour_praises(self, student_id: int) -> List[BehaviourEvent]:
         data = await self._get(ENDPOINT_STUDENT_PRAISES, {"student_id": student_id})
-        return [BehaviourEvent.from_dict(p) for p in data["data"]["student_praises"]]
+        return [BehaviourEvent.from_dict(p) for p in data["student_praises"]]
 
     async def get_behaviour_summary(self, student_id: int) -> BehaviourSummary:
         path = ENDPOINT_STUDENT_PRAISE_SUMMARY.format(student_id=student_id)
@@ -77,21 +91,42 @@ class SatchelOneClient:
 
     async def get_detentions(self, student_id: int) -> List[Detention]:
         data = await self._get(ENDPOINT_DETENTIONS, {"student_id": student_id})
-        return [Detention.from_dict(d) for d in data["data"]["detentions"]]
+        return [Detention.from_dict(d) for d in data["detentions"]]
 
-    async def login(self, username: str, password: str) -> str:
-        """Authenticate with the Satchel One API. Returns the bearer token."""
-        url = f"{API_HOST}{ENDPOINT_AUTH}"
+    async def search_schools(self, query: str) -> List[School]:
+        """Search public schools by name. Unauthenticated; needed to resolve the
+        school_id required by login()."""
+        url = f"{API_HOST}{ENDPOINT_SCHOOL_SEARCH}"
+        params = {"filter": query, "limit": 20}
+        async with self._session.get(url, headers=BASE_HEADERS, params=params) as resp:
+            if resp.status >= 500:
+                raise ServerError(f"Satchel One API returned {resp.status}")
+            data = await resp.json()
+        return [School.from_dict(s) for s in data["schools"]]
+
+    async def login(self, username: str, password: str, school_id: int) -> str:
+        """Authenticate via OAuth2 password grant. Returns the bearer (access) token.
+
+        Replicates the maintained smhw-api flow: client_id/client_secret as query
+        params, and a form body carrying the school_id (Satchel scopes the
+        credential check by school) plus an empty verification_token.
+        """
+        params = {"client_id": CLIENT_ID, "client_secret": CLIENT_SECRET}
         data = {
             "grant_type": "password",
             "username": username,
             "password": password,
+            "school_id": school_id,
+            "verification_token": "",
         }
-        async with self._session.post(url, headers=DEFAULT_HEADERS, data=data) as resp:
+        async with self._session.post(
+            OAUTH_TOKEN_URL, headers=BASE_HEADERS, params=params, data=data
+        ) as resp:
             if resp.status == 401:
                 raise AuthError("Invalid credentials")
             if resp.status >= 500:
                 raise ServerError(f"Satchel One API returned {resp.status}")
             payload = await resp.json()
+        # The web client uses access_token (not smhw_token) as the bearer.
         self._token = payload["access_token"]
         return self._token

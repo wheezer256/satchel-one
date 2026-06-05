@@ -165,7 +165,7 @@ async def test_server_error_raises_update_failed():
 
 def load_praises():
     data = json.loads((FIXTURES / "behaviour_praises.json").read_text())
-    return [BehaviourEvent.from_dict(p) for p in data["data"]["student_praises"]]
+    return [BehaviourEvent.from_dict(p) for p in data["student_praises"]]
 
 
 def load_summary():
@@ -175,7 +175,7 @@ def load_summary():
 
 def load_detentions(fixture="detentions.json"):
     data = json.loads((FIXTURES / fixture).read_text())
-    return [Detention.from_dict(d) for d in data["data"]["detentions"]]
+    return [Detention.from_dict(d) for d in data["detentions"]]
 
 
 def _make_behaviour_client(praises=None, summary=None, detentions=None):

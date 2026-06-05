@@ -63,7 +63,7 @@ class TestHomework:
 
 class TestBehaviourEvent:
     def test_parses_negative_event(self):
-        praise = load("behaviour_praises.json")["data"]["student_praises"][0]
+        praise = load("behaviour_praises.json")["student_praises"][0]
         event = BehaviourEvent.from_dict(praise)
         assert event.id == 801
         assert event.points == -1
@@ -73,7 +73,7 @@ class TestBehaviourEvent:
         assert event.comments == "Example note for testing."
 
     def test_parses_positive_event(self):
-        praise = load("behaviour_praises.json")["data"]["student_praises"][1]
+        praise = load("behaviour_praises.json")["student_praises"][1]
         event = BehaviourEvent.from_dict(praise)
         assert event.id == 802
         assert event.points == 1
@@ -81,17 +81,17 @@ class TestBehaviourEvent:
         assert event.comments is None
 
     def test_parses_high_positive_points(self):
-        praise = load("behaviour_praises.json")["data"]["student_praises"][2]
+        praise = load("behaviour_praises.json")["student_praises"][2]
         event = BehaviourEvent.from_dict(praise)
         assert event.points == 5
 
     def test_parses_all_events(self):
-        praises = load("behaviour_praises.json")["data"]["student_praises"]
+        praises = load("behaviour_praises.json")["student_praises"]
         events = [BehaviourEvent.from_dict(p) for p in praises]
         assert len(events) == 4
 
     def test_staff_name_composed(self):
-        praise = load("behaviour_praises.json")["data"]["student_praises"][0]
+        praise = load("behaviour_praises.json")["student_praises"][0]
         event = BehaviourEvent.from_dict(praise)
         assert event.staff_name == "Mrs. Staff Member"
 
@@ -124,7 +124,7 @@ class TestBehaviourSummary:
 
 class TestDetention:
     def test_empty_list_returns_no_detentions(self):
-        detentions = load("detentions.json")["data"]["detentions"]
+        detentions = load("detentions.json")["detentions"]
         items = [Detention.from_dict(d) for d in detentions]
         assert items == []
 

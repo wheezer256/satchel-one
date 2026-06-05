@@ -1,10 +1,12 @@
 {
   "access_token": "test-access-token-abc123",
-  "token_type": "Bearer",
+  "token_type": "bearer",
   "expires_in": 7776000,
   "refresh_token": "test-refresh-token-xyz789",
-  "scope": "api",
+  "smhw_token": "test-smhw-token-def456",
+  "created_at": 1717485632,
   "user_id": 99999999,
   "school_id": 99001,
-  "user_type": "Parent"
+  "user_type": "Parent",
+  "account_switch_enabled": false
 }

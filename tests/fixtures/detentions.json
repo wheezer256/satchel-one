@@ -1,9 +1,6 @@
 {
-  "url": "https://api.satchelone.com/api/detentions?student_id=99999999",
-  "data": {
-    "detentions": [],
-    "meta": {
-      "selection_count": 0
-    }
+  "detentions": [],
+  "meta": {
+    "selection_count": 0
   }
 }

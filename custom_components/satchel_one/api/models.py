@@ -6,6 +6,21 @@ from typing import Optional
 
 
 @dataclass
+class School:
+    id: int
+    name: str
+    town: str
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "School":
+        return cls(
+            id=data["id"],
+            name=data["name"],
+            town=data.get("town") or "",
+        )
+
+
+@dataclass
 class Child:
     id: int
     forename: str

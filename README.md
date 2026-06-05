@@ -1,6 +1,14 @@
 # Satchel One for Home Assistant
 
+[![CI](https://github.com/wheezer256/satchel-one/actions/workflows/ci.yml/badge.svg)](https://github.com/wheezer256/satchel-one/actions/workflows/ci.yml)
+[![hassfest](https://github.com/wheezer256/satchel-one/actions/workflows/hassfest.yaml/badge.svg)](https://github.com/wheezer256/satchel-one/actions/workflows/hassfest.yaml)
+[![HACS validate](https://github.com/wheezer256/satchel-one/actions/workflows/validate.yaml/badge.svg)](https://github.com/wheezer256/satchel-one/actions/workflows/validate.yaml)
+[![Release](https://img.shields.io/github/v/release/wheezer256/satchel-one?sort=semver)](https://github.com/wheezer256/satchel-one/releases)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 A [Home Assistant](https://www.home-assistant.io/) custom integration (HACS-distributable) that surfaces your child's school data from [Satchel One](https://www.satchelone.com/) into HA entities and events.
+
+> **Unofficial.** This is a community project and is **not** affiliated with, endorsed by, or supported by Satchel One / Teach Computing. See the [Disclaimer](#disclaimer) and [Privacy & data protection](#privacy--data-protection) below.
 
 ## What it does
 
@@ -38,9 +46,10 @@ All entities carry a `linked_person` attribute (the mapped `person.*` entity_id)
 ## Installation
 
 ### HACS (recommended)
-1. Add this repo as a custom repository in HACS (type: Integration)
-2. Install "Satchel One"
-3. Restart Home Assistant
+1. In HACS → **Integrations** → ⋮ → **Custom repositories**, add
+   `https://github.com/wheezer256/satchel-one` with category **Integration**.
+2. Install **Satchel One**.
+3. Restart Home Assistant.
 
 ### Manual
 Copy `custom_components/satchel_one/` into your HA `config/custom_components/` directory and restart.
@@ -49,10 +58,12 @@ Copy `custom_components/satchel_one/` into your HA `config/custom_components/` d
 
 ## Setup
 
-1. Go to **Settings → Devices & Services → Add Integration → Satchel One**
-2. Enter your Satchel One **parent account** email and password
-3. The integration discovers your linked children automatically
-4. Optionally link each child to an existing `person.*` entity in HA
+1. Go to **Settings → Devices & Services → Add Integration → Satchel One**.
+2. **Find your school** — type your school's name and pick it from the matches.
+3. **Sign in** — enter your Satchel One **parent account** email and password.
+4. The integration discovers your linked children automatically.
+5. Optionally **link each child** to an existing `person.*` entity in HA (the
+   dropdown lists each child by name).
 
 ---
 
@@ -144,6 +155,36 @@ action:
 
 ---
 
+## Disclaimer
+
+This is an independent, community-built integration. It is **not** affiliated
+with, endorsed by, supported by, or connected to Satchel One, Teach Computing,
+or any school.
+
+- It talks to an **unofficial, reverse-engineered** API. There is no guarantee of
+  availability or correctness, and it may stop working at any time if Satchel One
+  changes their service.
+- Provided **as is, without warranty of any kind** (see [LICENSE](LICENSE)). You
+  use it at your own risk.
+- Use it only with **your own parent account** to access **your own children's**
+  data. You are responsible for complying with Satchel One's terms of service.
+
+## Privacy & data protection
+
+This integration is designed to keep your family's data under your control:
+
+- It communicates **only** between your own Home Assistant instance and Satchel
+  One's API — there are **no third-party servers** involved.
+- Your credentials are stored in Home Assistant's config entry, **encrypted at
+  rest**, and are never logged. Diagnostics output is redacted.
+- It reads **only** the school data your own parent account can already see, and
+  stores it on the Home Assistant instance **you** run.
+- You remain the data controller for the information held in your Home Assistant.
+  If you stop using the integration, delete the config entry to remove the stored
+  credentials and data.
+
+---
+
 ## Roadmap
 
 - [x] Phase 0: API capture + sanitised fixtures
@@ -152,4 +193,6 @@ action:
 - [x] Phase 3: Behaviour sensors + event firing + person linking
 - [x] Phase 4: Detentions sensor + binary sensors + diagnostics + reauth
 - [x] Phase 5: Options flow (poll intervals + person re-mapping)
+- [x] **1.0:** verified end-to-end against the live API; public release
+- [ ] Silent token refresh (currently reauth re-prompts for the password)
 - [ ] Attendance (needs live endpoint capture first)

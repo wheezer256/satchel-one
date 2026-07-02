@@ -18,8 +18,8 @@ OAUTH_TOKEN_URL = "https://api.satchelone.com/oauth/token"
 # values Satchel bakes into its public web frontend (and are published openly
 # in the smhw-api reference library). The integration must send them as query
 # params on every token request.
-CLIENT_ID = "55283c8c45d97ffd88eb9f87e13f390675c75d22b4f2085f43b0d7355c1f"
-CLIENT_SECRET = "c8f7d8fcd0746adc50278bc89ed6f004402acbbf4335d3cb12d6ac6497d3"
+CLIENT_ID = "55283c8c45d97ffd88eb9f87e13f390675c75d22b4f2085f43b0d7355c1f"  # gitleaks:allow (public Satchel web-client id; see comment above)
+CLIENT_SECRET = "c8f7d8fcd0746adc50278bc89ed6f004402acbbf4335d3cb12d6ac6497d3"  # gitleaks:allow (public Satchel web-client secret; see comment above)
 
 # Versioned vendor media type used by EVERY Satchel One API call. Plain
 # `application/json` gets some endpoints (e.g. /students) bounced to an HTML
